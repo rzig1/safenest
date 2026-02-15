@@ -4,7 +4,7 @@ SafeNest is a secure, role-based adoption matching platform designed to protect 
 
 Inspired by the need to protect vulnerable children (just like in Hunter × Hunter), SafeNest focuses on verification, compatibility matching, and risk prevention.
 
-# Please come to testit in my machine
+# Please come to test it on my machine
 
 🌟 Core Mission
 
