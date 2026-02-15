@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  FAMILY
+  CASEWORKER
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  LOCKED
+  BANNED
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING_REVIEW
+  VERIFIED
+  REJECTED
+}
+
+enum ChildStatus {
+  AVAILABLE
+  MATCHING
+  PLACED
+}
+
+enum MatchStatus {
+  SUGGESTED
+  SHORTLISTED
+  REJECTED
+  PLACED
+}
+
+model User {
+  id                String              @id @default(cuid())
+  email             String              @unique
+  passwordHash      String
+  role              Role                @default(FAMILY)
+  status            AccountStatus        @default(ACTIVE)
+  verification      VerificationStatus   @default(UNVERIFIED)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  familyProfile     FamilyProfile?
+  createdChildren   Child[]              @relation("ChildrenCreated")
+  riskEvents        RiskEvent[]
+  matches           Match[]              @relation("FamilyMatches")
+  documents         Document[]
+}
+
+model FamilyProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  fullName      String
+  city          String
+  householdSize Int
+  incomeRange   String
+  experience    String?
+  preferences   Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+model Child {
+  id          String      @id @default(cuid())
+  createdById String
+  ageMin      Int
+  ageMax      Int
+  city        String
+  needs       Json
+  preferences Json
+  status      ChildStatus @default(AVAILABLE)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  createdBy   User        @relation("ChildrenCreated", fields: [createdById], references: [id])
+  matches     Match[]     @relation("ChildMatches")
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  url       String
+  status    String   @default("UPLOADED")
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Match {
+  id           String      @id @default(cuid())
+  childId      String
+  familyUserId String
+  score        Int
+  reasons      Json
+  status       MatchStatus @default(SUGGESTED)
+  createdAt    DateTime    @default(now())
+
+  child        Child       @relation("ChildMatches", fields: [childId], references: [id])
+  family       User        @relation("FamilyMatches", fields: [familyUserId], references: [id])
+
+  @@unique([childId, familyUserId])
+}
+
+model RiskEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  metadata  Json
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
